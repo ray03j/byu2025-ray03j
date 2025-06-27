@@ -1,0 +1,117 @@
+task:  # task specific config
+  img_size: 224
+  img_depth: 16
+  fixed_depth: 16
+  slice_depth: 5
+  pretrain: false
+  # debug: false
+  # seed: 42
+  # pool_center: false
+  # augment: false
+  # pseudo_prefix: null
+  # train_pseudo: false
+  # pseudo_only: false
+  # sim: false
+  # head: "none"
+  # spec_shift: false
+  # stratified: false
+  # random_downsample: false
+  # downsample_rate: 5
+
+  
+  dirname: train_npzs
+
+model:
+  freeze_end_epoch: 16
+  arch: timm_encoder # モデルのアーキテクチャ (simple_2_5d_model, 2.5D U-Net)
+  in_channels: 16   # 入力チャンネル数 (例: グレースケール画像)
+  out_channels: 1  # 出力クラス数 (例: セグメンテーションクラス)
+  depth: 4         # U-Netのエンコーダ/デコーダの深さ
+  base_filters: 64 # 初期フィルター数 (各層で倍増)
+  dropout: 0.1     # ドロップアウト率
+  use_batchnorm: true # BatchNormの使用
+  activation: "relu" # 活性化関数 (例: relu, leaky_relu, etc.)
+  
+  swa: false
+  freeze_backbone: false
+  backbone: convnext_tiny.in12k_ft_in1k
+  
+  ema: false
+  resume_path: byu0515_epoch=000_val_loss=0.0201.ckpt
+  # ema_decay: 0.999
+  # ema_update_after_step: 0
+  drop_path_rate: 0.0
+  # drop_rate: 0.0
+
+  # attn_drop_rate: 0.0
+  # stem_stride: 1
+  # stem_kernel_size: 3
+
+  img_size: 128
+  img_depth: 16
+  kernel_size: 5
+  class_num: 5
+  # d_model: 128
+  # num_layers: 2
+  # use_lstm: false
+  # use_attn: false
+  # pool: "avg"  # avg, gem
+  # with_pool2: true
+  # normalize_patch: false
+  # depth_flip: false
+  # stride: "pool"  # pool, conv
+  # train_stride: 0.5
+  # use_intermediate_conv: true
+
+data:
+  fold_num: 5
+  fold_id: 0
+  num_workers: 8
+  batch_size: 16
+  train_all: false
+  input_dir: null # /kaggle/input/byu-base0526-1
+  output_dir: null # /kaggle/working/output
+  val_output_dir: null # /kaggle/working/val
+
+trainer:
+  max_epochs: 32
+  devices: "auto"  # list or str, -1 to indicate all available devices
+  strategy: "auto"  # ddp
+  check_val_every_n_epoch: 1
+  sync_batchnorm: false
+  accelerator: "gpu"  # cpu, gpu, tpu, ipu, hpu, mps, auto
+  precision: 32  # 16, 32, 64, bf16
+  gradient_clip_val: null
+  accumulate_grad_batches: 1
+  deterministic: true
+  # reload_dataloaders_every_n_epochs: 0
+
+test:
+  mode: test  # test or val
+  output_dir: preds_results
+  # tta: false
+  # target: axial
+  # dirname: null
+
+opt:
+  opt: "AdamW"  # SGD, Adam, AdamW...
+  lr: 1e-4
+  weight_decay: 0.01
+
+scheduler:
+  sched: "cosine"
+  min_lr: 0.0
+  warmup_epochs: 0
+
+loss:
+  mixup: 0.0
+  cutmix: 0.0
+
+  # name: "mse"  # bce, focal
+  # alpha: 0.25
+  # neg_weight: 0.1
+
+wandb:
+  project: byu2025
+  name: byu0526
+  fast_dev_run: false

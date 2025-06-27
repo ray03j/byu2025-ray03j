@@ -1,0 +1,14 @@
+.env
+
+input/
+working/
+
+byu2025/
+
+solution.csv
+saved_models/
+
+__pycache__/
+
+wandb/
+lightning_logs/
