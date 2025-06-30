@@ -43,15 +43,26 @@ def main():
         input_dir = Path(args.input_dir)
     else:
         input_dir = data_root.joinpath("data")
-    df = pd.read_csv(input_dir.joinpath("train_labels.csv"))
+
     if args.output_dir:
         output_dir = Path(args.output_dir).joinpath(f"{mode}_imgs")
     else:
         output_dir = data_root.joinpath("working", f"{mode}_imgs")
     output_dir.mkdir(exist_ok=True, parents=True)
 
-    for tomo_id, sub_df in tqdm(df.groupby("tomo_id")):
-        tomo_dir = input_dir.joinpath(mode, tomo_id)
+    if mode == "train":
+        df = pd.read_csv(input_dir.joinpath("train_labels.csv"))
+        tomo_ids_to_process = df["tomo_id"].unique()
+        data_source_dir = input_dir.joinpath(mode)
+    elif mode == "test":
+        test_data_dir = input_dir.joinpath("test")
+        tomo_ids_to_process = [d.name for d in test_data_dir.iterdir() if d.is_dir()]
+        data_source_dir = input_dir.joinpath(mode)
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+
+    for tomo_id in tqdm(tomo_ids_to_process):
+        tomo_dir = data_source_dir.joinpath(mode, tomo_id)
         tomogram = load_tomogram(tomo_dir)
         if tomogram is None:
             continue

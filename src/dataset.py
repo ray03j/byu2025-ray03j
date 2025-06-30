@@ -7,6 +7,7 @@ import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from PIL import Image
 import os
+import warnings
 
 def load_tomogram(tomo_dir, resize=(224, 224), fixed_depth=16):
     slices = []
@@ -86,6 +87,23 @@ class MyDataset(Dataset):
         if self.mode == "test":
             npz_dir = self.output_dir.joinpath("test_imgs")
             npz_path = npz_dir.joinpath(f"{tomo_id}.npz")
+            if not npz_path.exists():
+                warnings.warn(f"Test NPZ file not found for tomo_id: {tomo_id}")
+                # エラー処理またはスキップ
+                # ここではダミーデータを返す例
+                h, w = self.cfg.task.img_size, self.cfg.task.img_size
+                sub_volume = torch.zeros((self.slice_depth, h, w), dtype=torch.float32)
+                label = np.zeros(3, dtype=np.float32) # ダミーラベル
+                mask = np.zeros((1, h, w), dtype=np.float32) # 全体が0のマスク
+                offset = np.zeros((3, h, w), dtype=np.float32) # 全体が0のオフセット
+                return (
+                    sub_volume,
+                    torch.from_numpy(label),
+                    torch.from_numpy(mask),
+                    torch.from_numpy(offset),
+                    tomo_id,
+                )
+
             data = np.load(npz_path)
             tomogram = data["tomogram"]
             sub_volume = tomogram[start_idx:start_idx + self.slice_depth]
@@ -93,13 +111,12 @@ class MyDataset(Dataset):
             if self.transforms is not None:
                 sub_volume = self.transforms(image=sub_volume)["image"]
 
-            # ラベル・マスク・オフセット
-            label_row = self.train_labels_df.loc[tomo_id]
-            label = label_row[["Motor axis 0", "Motor axis 1", "Motor axis 2"]].values
-            
             h, w = self.cfg.task.img_size, self.cfg.task.img_size
-            mask = self.create_mask_from_label(label_row, (h, w))
-            offset = self.create_offset_from_label(label_row, (h, w))
+            
+            # ラベル・マスク・オフセット
+            label = np.zeros(3, dtype=np.float32) 
+            mask = np.ones((1, h, w), dtype=np.float32) 
+            offset = np.zeros((3, h, w), dtype=np.float32) 
 
             return (
                 sub_volume,
